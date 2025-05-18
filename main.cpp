@@ -4,7 +4,7 @@
 #include "gotoxy.h"
 #include "logica.h"
 #include "modo.h"
-
+//.
 using namespace std;
 
 int main() {
