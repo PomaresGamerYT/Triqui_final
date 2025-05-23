@@ -1,40 +1,132 @@
 #include <iostream>
-#include <conio.h>       // Necesario para getch()
-#include <windows.h>     // Necesario para Sleep(), system("cls")
-#include <random>        // Para generación aleatoria mejorada
+#include <conio.h>
+#include <windows.h>
+#include <random>
+#include <algorithm>
 #include "cpu.h"
 #include "gotoxy.h"
 #include "logica.h"
 #include "interfaz.h"
+#include "audio.h"
 
 using namespace std;
 int jug1=0, cpu_puntaje=0;
+
+// Función para verificar movimientos ganadores
+bool movimientoGanador(char jugador, int& fila, int& columna) {
+    // Verificar filas
+    for (int i = 0; i < 3; i++) {
+        int contador = 0, columna_vacia = -1;
+        for (int j = 0; j < 3; j++) {
+            if (matrizJuego[i][j] == jugador) contador++;
+            else if (matrizJuego[i][j] == ' ') columna_vacia = j;
+        }
+        if (contador == 2 && columna_vacia != -1) {
+            fila = i;
+            columna = columna_vacia;
+            return true;
+        }
+    }
+
+    // Verificar columnas
+    for (int j = 0; j < 3; j++) {
+        int contador = 0, fila_vacia = -1;
+        for (int i = 0; i < 3; i++) {
+            if (matrizJuego[i][j] == jugador) contador++;
+            else if (matrizJuego[i][j] == ' ') fila_vacia = i;
+        }
+        if (contador == 2 && fila_vacia != -1) {
+            fila = fila_vacia;
+            columna = j;
+            return true;
+        }
+    }
+
+    // Verificar diagonal principal
+    int contador = 0, posicion_vacia = -1;
+    for (int i = 0; i < 3; i++) {
+        if (matrizJuego[i][i] == jugador) contador++;
+        else if (matrizJuego[i][i] == ' ') posicion_vacia = i;
+    }
+    if (contador == 2 && posicion_vacia != -1) {
+        fila = posicion_vacia;
+        columna = posicion_vacia;
+        return true;
+    }
+
+    // Verificar diagonal secundaria
+    contador = 0;
+    posicion_vacia = -1;
+    for (int i = 0; i < 3; i++) {
+        if (matrizJuego[i][2-i] == jugador) contador++;
+        else if (matrizJuego[i][2-i] == ' ') posicion_vacia = i;
+    }
+    if (contador == 2 && posicion_vacia != -1) {
+        fila = posicion_vacia;
+        columna = 2-posicion_vacia;
+        return true;
+    }
+
+    return false;
+}
+
+// Función para elegir la mejor jugada
+void mejorJugada(int& fila, int& columna) {
+    // 1. Buscar jugada ganadora para la CPU (O)
+    if (movimientoGanador('O', fila, columna)) return;
+    
+    // 2. Bloquear jugada ganadora del jugador (X)
+    if (movimientoGanador('X', fila, columna)) return;
+    
+    // 3. Tomar el centro si está disponible
+    if (matrizJuego[1][1] == ' ') {
+        fila = 1;
+        columna = 1;
+        return;
+    }
+    
+    // 4. Tomar una esquina si está disponible
+    vector<pair<int, int>> esquinas = {{0,0}, {0,2}, {2,0}, {2,2}};
+    random_shuffle(esquinas.begin(), esquinas.end());
+    for (auto pos : esquinas) {
+        if (matrizJuego[pos.first][pos.second] == ' ') {
+            fila = pos.first;
+            columna = pos.second;
+            return;
+        }
+    }
+    
+    // 5. Tomar cualquier posición disponible
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            if (matrizJuego[i][j] == ' ') {
+                fila = i;
+                columna = j;
+                return;
+            }
+        }
+    }
+}
+
 void cpu() {
-    // Inicialización del generador aleatorio
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<int> dist(0, 2);
 
     int fila = 0, columna = 0;
     bool juegoTerminado = false;
-    int movimientosCPU = 0;
+    playBackgroundMusic("musicatablero.wav");
     
-    // El jugador siempre inicia (jugador 1 con 'X')
     turnoJugador1 = true;
     gotoxy (92, 5);cout<<"Victorias Jugador 1: "<<jug1<<endl;
     gotoxy (92, 7);cout<<"Victorias CPU: "<<cpu_puntaje<<endl;
-    // Bucle principal de partida
+    
     while (!juegoTerminado) {
         if (turnoJugador1) {  
-            // --- Turno del Jugador 1 (con 'X') ---
-            // Se muestra la celda actual
             gotoxy(posiciones[fila][columna][0], posiciones[fila][columna][1]);
-            cout << (matrizJuego[fila][columna] != ' ' ? matrizJuego[fila][columna] : ' ');
-            cout.flush();
             
             if (kbhit()) {
                 int tecla = getch();
-                // Flechas para moverse
                 if (tecla == 224) {
                     tecla = getch();
                     switch (tecla) {
@@ -43,19 +135,22 @@ void cpu() {
                         case 75: if (columna > 0) columna--; break;
                         case 77: if (columna < 2) columna++; break;
                     }
-                } else if (tecla == 13) {  // Enter para colocar ficha
+                } else if (tecla == 13) {
                     if (matrizJuego[fila][columna] == ' ') {
+                    	playEffect("sonidoboton.wav");
                         matrizJuego[fila][columna] = 'X';
                         dibujarSimbolo(fila, columna, 'X');
 
-                        // Verifica si ganó el jugador o hubo empate
                         if (hayGanador()) {
                             gotoxy(35, 28);
+                            poner_color(9);
+                            pauseBackgroundMusic();
+                            playEffect("victoria.wav");
                             cout << "Jugador 1 (X) gana!";
                             if (turnoJugador1){
-                            	jug1++;
-							}
-							gotoxy (92, 5);cout<<"Victorias Jugador 1: "<<jug1<<endl;
+                                jug1++;
+                            }
+                            gotoxy (92, 5);cout<<"Victorias Jugador 1: "<<jug1<<endl;
                             getch();
                             juegoTerminado = true;
                             break;
@@ -66,100 +161,70 @@ void cpu() {
                             juegoTerminado = true;
                             break;
                         }
-                        turnoJugador1 = false; // Pasa el turno a la CPU
+                        turnoJugador1 = false;
                     }
                 }
             }
         } else {
-            // --- Turno de la CPU (con 'O') ---
             gotoxy(32, 28); cout << "Turno de la CPU...         ";
-            Sleep(500);  // Pausa para simular proceso
-            gotoxy(32, 28); cout << "                         "; //Espaciado para borrar el mensaje en cada turno
-                        
-            if (movimientosCPU < 2) {
-                // Para las primeras dos jugadas, movimiento aleatorio
-                do {
-                    fila = dist(gen);
-                    columna = dist(gen);
-                } while (matrizJuego[fila][columna] != ' ');
-            } else {
-                // A partir de la tercera jugada, intenta buscar oportunidad de ganar
-                bool movimientoEncontrado = false;
-                int tempFila = -1, tempCol = -1;
-                for (int i = 0; i < 3 && !movimientoEncontrado; i++) {
-                    for (int j = 0; j < 3 && !movimientoEncontrado; j++) {
-                        if (matrizJuego[i][j] == ' ') {
-                            // Simula poner 'O' en esa posición
-                            matrizJuego[i][j] = 'O';
-                            if (hayGanador()) {
-                                tempFila = i;
-                                tempCol = j;
-                                movimientoEncontrado = true;
-                            }
-                            matrizJuego[i][j] = ' '; // Revierte la simulación
-                        }
-                    }
-                }
-                if (movimientoEncontrado) {
-                    fila = tempFila;
-                    columna = tempCol;
-                } else {
-                    // Si no encontró oportunidad ganadora, elige al azar
-                    do {
-                        fila = dist(gen);
-                        columna = dist(gen);
-                    } while (matrizJuego[fila][columna] != ' ');
-                }
-            }
-            // Realiza el movimiento de la CPU
+            Sleep(500);
+            gotoxy(32, 28); cout << "                         ";
+            
+            // La CPU decide su movimiento usando la estrategia mejorada
+            mejorJugada(fila, columna);
+
             matrizJuego[fila][columna] = 'O';
             dibujarSimbolo(fila, columna, 'O');
-            movimientosCPU++;
             
-            // Verifica victoria o empate tras la jugada de la CPU
             if (hayGanador()) {
-            	gotoxy(32, 28); cout << "                         ";
+                gotoxy(32, 28); cout << "                         ";
                 gotoxy(38, 28);
+                poner_color(9);
+                pauseBackgroundMusic();
+                playEffect("victoriacpu.wav");
                 cout << "La CPU gana!";
-                if (turnoJugador1==false){
+                if (!turnoJugador1){
                     cpu_puntaje++;
-				}
-				gotoxy (92, 7);cout<<"Victorias CPU: "<<cpu_puntaje<<endl;
+                }
+                gotoxy (92, 7);cout<<"Victorias CPU: "<<cpu_puntaje<<endl;
                 getch();
                 juegoTerminado = true;
                 break;
             } else if (hayEmpate()) {
-            	gotoxy(32, 28); cout << "                         ";
+                gotoxy(32, 28); cout << "                         ";
                 gotoxy(41, 28);
                 cout << "Empate!";
                 getch();
                 juegoTerminado = true;
                 break;
             }
-            turnoJugador1 = true;  // Vuelve el turno al Jugador 1
+            turnoJugador1 = true;
         }
         Sleep(50);
-    } // Fin del bucle principal
+    }
+    mciSendString("close all", NULL, 0, NULL);
 
-    // --- Preguntar si se desea iniciar una nueva partida ---
     char respuesta;
     gotoxy(26, 28); cout << "Desea iniciar una nueva partida? (S/N): ";
     cin >> respuesta;
     
     if (respuesta == 'S' || respuesta == 's') {
-    	gotoxy(26, 28); cout << "                                         "; // Borra cualquier texto residual
+    	playEffect("sonidoboton.wav");
+        gotoxy(26, 28); cout << "                                         ";
         reiniciarTablero();
-        cpu();      // Reinicia el modo CPU
+        tablero();
+        cpu();
     } else {
+    	playEffect("sonidoboton.wav");
         system("cls");
         gotoxy (12,2); cout<<"Grupo Conformado por:"<<endl;
-    	gotoxy (12,4); cout<<"Fabian Coronel Morato"<<endl;
-    	gotoxy (12,6); cout<<"Andres Pomares Navarro"<<endl;
-    	gotoxy (12,8); cout<<"Cesar Beltran Alvarado"<<endl;
-    	gotoxy (12,10); cout<<"Isai Cabeza De la Hoz"<<endl;
-    	gotoxy (12,12); cout<<"Clase: Programacion II"<<endl;
-    	gotoxy (10,14); cout<<"Profesor: Tomas Campo Cadernas"<<endl;
-    	gotoxy (6,16); cout<<"Institucion: Universidad del Magdalena"<<endl;
+        gotoxy (12,4); cout<<"1. Fabian Coronel Morato"<<endl;
+        gotoxy (12,6); cout<<"2. Andres Pomares Navarro"<<endl;
+        gotoxy (12,8); cout<<"3. Cesar Beltran Alvarado"<<endl;
+        gotoxy (12,10); cout<<"4.                       "<<endl;
+        gotoxy (12,12); cout<<"Clase: Programacion II"<<endl;
+        gotoxy (10,14); cout<<"Profesor: Tomas Campo Cadernas"<<endl;
+        gotoxy (6,16); cout<<"Institucion: Universidad del Magdalena"<<endl;
         gotoxy(15,18); cout << "Gracias por jugar!";
     }
 }

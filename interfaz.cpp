@@ -1,19 +1,18 @@
 #include <iostream>
-#include <string> //Para tener un mejor funcionamiento
-#include <windows.h> //Para usar el comando Sleep
+#include <string>
+#include <windows.h>
 #include "gotoxy.h"
 
 using namespace std;
 
-void poner_color(int color) {  //Se utiliza esta funcion para cambiar el color (del 0 al 15)
+void poner_color(int color) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, color);
 }
 
-//Dibujado del menu
 void menu(){
-	poner_color(13);
-	for (int x=6; x<82; x++){
+    poner_color(13);
+    for (int x=6; x<82; x++){
         gotoxy (x,2);cout<<char(205);
         Sleep(20);
     }
@@ -30,6 +29,7 @@ void menu(){
         gotoxy (x,30);cout<<char(205);
         Sleep(20);
     }
+    
     poner_color(12);
     gotoxy (24,5);cout<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219);
     gotoxy (24,6);cout<<"   "<<char(219)<<char(219)<<"  ";
@@ -101,7 +101,6 @@ void menu(){
     
     gotoxy (33,18);cout<<"2. Jugador 1 vs CPU";
 
-
     for (int x=26; x<60; x++){
         gotoxy (x,22);cout<<char(205);
     }
@@ -117,7 +116,6 @@ void menu(){
         gotoxy (x,26);cout<<char(205);
     }
     gotoxy (40,24);cout<<"3.Salir";
-
 
     for (int x=86; x<120; x++){
         gotoxy (x,2);cout<<char(205);
@@ -136,13 +134,11 @@ void menu(){
         gotoxy (x,10);cout<<char(205);
         Sleep(20);
     }
-
-    
 }
 
 void tablero(){
-	poner_color (13);
-	for (int x=6; x<82; x++){
+    poner_color (13);
+    for (int x=6; x<82; x++){
         gotoxy (x,2);cout<<char(205);
         Sleep(20);
     }
