@@ -5,14 +5,15 @@
 
 using namespace std;
 
-void poner_color(int color) {
+void poner_color(int color) { //Funcion utilizada para colocar los colores
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, color);
 }
 
-void menu(){
-    poner_color(13);
-    for (int x=6; x<82; x++){
+void menu(){ //Dibujo de todo el menu y sus respectivos mensajes
+    poner_color(13); //Utilizando como parametro un numero del 1 al 15 se cambiara de color esa parte del codigo con un color de la terminal de Windows
+    //Impresion de cuadro central 
+	for (int x=6; x<82; x++){
         gotoxy (x,2);cout<<char(205);
         Sleep(20);
     }
@@ -30,6 +31,7 @@ void menu(){
         Sleep(20);
     }
     
+    //Impresion de letras y cada una con color diferente
     poner_color(12);
     gotoxy (24,5);cout<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219)<<char(219);
     gotoxy (24,6);cout<<"   "<<char(219)<<char(219)<<"  ";
@@ -67,6 +69,7 @@ void menu(){
     gotoxy (60,7);cout<<char(219);
     gotoxy (60,8);cout<<char(219);
     
+    //Cuadro para el modo numero 1 de jugador vs jugador
     poner_color(11);
     for (int x=26; x<60; x++){
         gotoxy (x,10);cout<<char(205);
@@ -83,7 +86,8 @@ void menu(){
         gotoxy (x,14);cout<<char(205);
     }
     gotoxy (31,12);cout<<"1. Jugador 1 vs Jugador 2";
-
+    
+    //Cuadro para el modo numero 2 de jugador vs cpu
     for (int x=26; x<60; x++){
         gotoxy (x,16);cout<<char(205);
     }
@@ -100,7 +104,8 @@ void menu(){
     }
     
     gotoxy (33,18);cout<<"2. Jugador 1 vs CPU";
-
+    
+    //Cuadro para el modo numero 3 para salir
     for (int x=26; x<60; x++){
         gotoxy (x,22);cout<<char(205);
     }
@@ -137,6 +142,7 @@ void menu(){
 }
 
 void tablero(){
+	//Se dibuja toda la tabla
     poner_color (13);
     for (int x=6; x<82; x++){
         gotoxy (x,2);cout<<char(205);
@@ -144,6 +150,7 @@ void tablero(){
     }
     gotoxy (6,2);cout<<char(201);
     gotoxy (82,2);cout<<char(187);
+    
     for (int y=3; y<30; y++){
         gotoxy (6,y);cout<<char(186);
         gotoxy (82,y);cout<<char(186);
@@ -156,6 +163,7 @@ void tablero(){
         Sleep(20);
     }
     
+    //Se dibuja el cuadro marcado del triqui
     poner_color(5);
     for (int x=24; x<64; x++){
         gotoxy (x,13);cout<<char(219);
@@ -173,7 +181,8 @@ void tablero(){
         gotoxy (50,y);cout<<char(219);
         gotoxy (51,y);cout<<char(219);
     }
-
+    
+    //Se dibuja el cuadro en donde van las puntuaciones
     poner_color(9);
     for (int x=86; x<120; x++){
         gotoxy (x,2);cout<<char(205);
